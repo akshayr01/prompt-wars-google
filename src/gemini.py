@@ -1,4 +1,4 @@
-"""Gemini service — handles all LLM calls via google-generativeai."""
+"""Gemini service — handles all LLM calls via Vertex AI (google-cloud-aiplatform)."""
 
 import os
 import json
@@ -6,7 +6,8 @@ import re
 import hashlib
 import logging
 
-import google.generativeai as genai
+import vertexai
+from vertexai.generative_models import GenerativeModel, GenerationConfig
 
 logger = logging.getLogger(__name__)
 
@@ -17,13 +18,15 @@ _model = None
 
 
 def _get_model():
-    """Lazy-initialize the Gemini model."""
+    """Lazy-initialize the Vertex AI Gemini model."""
     global _model
     if _model is None:
-        api_key = os.environ.get("GEMINI_API_KEY", "")
-        if not api_key:
-            raise RuntimeError("GEMINI_API_KEY environment variable is not set")
-        genai.configure(api_key=api_key)
+        project_id = os.environ.get("GCP_PROJECT_ID") or os.environ.get("GCP_PROJECT")
+        if not project_id:
+            raise RuntimeError("GCP_PROJECT_ID or GCP_PROJECT environment variable is not set")
+            
+        location = os.environ.get("GCP_LOCATION", "us-central1")
+        vertexai.init(project=project_id, location=location)
         
         grounding_rules = (
             "You are Sahayak AI, an expert emergency responder and dispatcher. "
@@ -39,9 +42,8 @@ def _get_model():
         )
 
         model_name = os.environ.get("GEMINI_MODEL", "gemini-1.5-flash")
-        _model = genai.GenerativeModel(
+        _model = GenerativeModel(
             model_name,
-            generation_config=genai.GenerationConfig(temperature=0.1),
             system_instruction=grounding_rules,
         )
     return _model
@@ -66,7 +68,12 @@ def call_gemini(prompt: str) -> str:
 
     try:
         model = _get_model()
-        response = model.generate_content(prompt)
+        # Vertex AI config is passed in generate_content or init
+        generation_config = GenerationConfig(
+            temperature=0.1,
+            max_output_tokens=2048,
+        )
+        response = model.generate_content(prompt, generation_config=generation_config)
         result = response.text
         _cache[prompt_hash] = result
         logger.info(
@@ -95,10 +102,11 @@ def call_gemini_json(prompt: str) -> dict:
         cleaned = cleaned.rstrip("`").strip()
         return json.loads(cleaned)
     except json.JSONDecodeError as e:
-        logger.error("JSON parse failed", extra={"error": str(e), "raw": raw[:200]})
+        logger.error("JSON parse failed", extra={"error": str(e), "raw": raw[:200] if 'raw' in locals() else 'No raw data'})
         return {}
     except RuntimeError:
         raise
     except Exception as e:
         logger.error("call_gemini_json error", extra={"error": str(e)})
         return {}
+
