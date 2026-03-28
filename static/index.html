@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Sahayak AI — Emergency triage powered by Google Gemini">
+    <title>Sahayak AI — Emergency Triage</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <a href="#main" class="skip-link">Skip to main content</a>
+
+    <main id="main">
+        <header class="header">
+            <div class="header-top">
+                <h1><span class="emoji-logo" aria-hidden="true">🆘</span> <span class="brand-text">Sahayak AI</span></h1>
+                <button id="theme-toggle" class="icon-btn" aria-label="Toggle theme">☀️ Light Mode</button>
+            </div>
+            <p class="tagline">Instant Emergency Triage When Seconds Count · Powered by Gemini</p>
+        </header>
+
+        <section class="input-section" aria-labelledby="input-heading">
+            <h2 id="input-heading" class="sr-only">Emergency Input</h2>
+            <div class="template-chips" aria-label="Quick Templates">
+                <button type="button" class="template-btn" data-text="Person fainted and is unresponsive">🚑 Medical</button>
+                <button type="button" class="template-btn" data-text="Fire broke out in residential building">🔥 Fire</button>
+                <button type="button" class="template-btn" data-text="Multiple car crash on the highway">🚗 Accident</button>
+                <button type="button" class="template-btn" data-text="Earthquake tremors felt, building shaking">🌍 Disaster</button>
+            </div>
+            <label for="emergency-input">Describe the emergency situation</label>
+            <textarea
+                id="emergency-input"
+                rows="4"
+                maxlength="5000"
+                required
+                aria-describedby="input-hint"
+                placeholder="Type in any language — Hindi: आग लगी है | Telugu: అగ్ని ప్రమాదం | English: Fire..."
+            ></textarea>
+            <small id="input-hint">🌐 Works in <strong>Hindi, Telugu, Kannada, Tamil, Bengali, English</strong> and more — auto-detected &amp; translated by Google Translate</small>
+            <button id="analyze-btn" aria-label="Analyze emergency situation">
+                <span id="btn-text">Analyze Emergency</span>
+            </button>
+        </section>
+
+        <div id="loading" class="loading" role="status" aria-live="polite" style="display: none;">
+            <div class="spinner" aria-hidden="true"></div>
+            <span id="loading-text">Analyzing emergency situation...</span>
+        </div>
+
+        <div id="error-msg" class="error-msg" role="alert" aria-live="assertive" hidden></div>
+
+        <section id="result-card" class="result-card" role="region" aria-label="Emergency response card" aria-live="assertive" hidden>
+            <div class="result-header">
+                <div>
+                    <span id="severity-badge" class="severity-badge"></span>
+                    <span id="confidence-badge" class="confidence-badge"></span>
+                    <span id="lang-badge" class="lang-badge" hidden></span>
+                </div>
+                <button id="tts-btn" class="icon-btn tts-btn" aria-label="Read Aloud">🔊 Read Aloud</button>
+            </div>
+            <div id="result-reasoning" class="result-reasoning"></div>
+            <div class="result-body">
+                <h3>Situation</h3>
+                <p id="result-situation"></p>
+
+                <div class="result-meta">
+                    <span class="meta-tag" id="result-category"></span>
+                    <span class="meta-tag" id="result-priority"></span>
+                </div>
+
+                <h3>Recommended Actions</h3>
+                <ol id="result-actions" class="actions-list"></ol>
+
+                <h3>Emergency Contacts</h3>
+                <div id="result-contacts" class="contacts-grid"></div>
+
+                <div class="chat-section">
+                    <h3>Ask Follow-up Questions</h3>
+                    <div id="chat-history" class="chat-history" aria-live="polite"></div>
+                    <div class="chat-input-wrapper">
+                        <input type="text" id="chat-input" maxlength="1000" required placeholder="e.g. Can I move them if there is a neck injury?" aria-label="Ask a follow up question">
+                        <button id="chat-send-btn">Ask</button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="examples-section" class="examples-section" aria-labelledby="examples-heading">
+            <h2 id="examples-heading">Sample Scenarios & Responses</h2>
+            
+            <details class="example-card">
+                <summary>🚑 Medical: Person fainted and is unresponsive</summary>
+                <div class="example-content">
+                    <div class="result-header" style="border-bottom: none; padding: 0 0 12px 0;">
+                        <div>
+                            <span class="severity-badge critical">CRITICAL</span>
+                            <span class="confidence-badge">Confidence: high</span>
+                        </div>
+                    </div>
+                    <strong>Priority: immediate</strong>
+                    <p style="margin-top: 8px;"><strong>Recommended Actions:</strong></p>
+                    <ol>
+                        <li>Check for breathing and pulse immediately.</li>
+                        <li>Call the Ambulance at 108.</li>
+                        <li>If no pulse, begin CPR (Chest compressions).</li>
+                        <li>Do not crowd the person; ensure fresh air.</li>
+                    </ol>
+                </div>
+            </details>
+
+            <details class="example-card">
+                <summary>🔥 Fire: Kitchen fire spreading rapidly</summary>
+                <div class="example-content">
+                    <div class="result-header" style="border-bottom: none; padding: 0 0 12px 0;">
+                        <div>
+                            <span class="severity-badge high">HIGH</span>
+                            <span class="confidence-badge">Confidence: high</span>
+                        </div>
+                    </div>
+                    <strong>Priority: immediate</strong>
+                    <p style="margin-top: 8px;"><strong>Recommended Actions:</strong></p>
+                    <ol>
+                        <li>Evacuate all family members from the house immediately.</li>
+                        <li>Call the Fire Brigade at 101 from a safe distance outside.</li>
+                        <li>Do not use water on grease/oil fires.</li>
+                        <li>Close doors behind you to slow the spread of the fire.</li>
+                    </ol>
+                </div>
+            </details>
+
+            <details class="example-card">
+                <summary>🌍 Disaster: Earthquake tremors felt</summary>
+                <div class="example-content">
+                    <div class="result-header" style="border-bottom: none; padding: 0 0 12px 0;">
+                        <div>
+                            <span class="severity-badge medium">MEDIUM</span>
+                            <span class="confidence-badge">Confidence: high</span>
+                        </div>
+                    </div>
+                    <strong>Priority: urgent</strong>
+                    <p style="margin-top: 8px;"><strong>Recommended Actions:</strong></p>
+                    <ol>
+                        <li>Drop to the ground, Cover your head and neck under a sturdy table, and Hold On.</li>
+                        <li>Stay away from glass, windows, and heavy fixtures.</li>
+                        <li>Do not use elevators if you are in a high-rise building.</li>
+                        <li>Once shaking stops, evacuate using stairs and move to an open area.</li>
+                    </ol>
+                </div>
+            </details>
+        </section>
+
+        <section id="history-section" class="history-section" aria-labelledby="history-heading" hidden>
+            <h2 id="history-heading">Recent Analyses</h2>
+            <div id="history-list" class="history-list"></div>
+        </section>
+    </main>
+
+    <footer>
+        <p>✨ Powered by Google Gemini · Google Cloud</p>
+    </footer>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>
